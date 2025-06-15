@@ -561,7 +561,7 @@ recover_wifi_passwords() {
     if ! execute_with_retry "adb -s $device_serial shell 'test -f $wifi_file && echo exists'" "WiFi config check" | grep -q "exists"; then
         log "ERROR" "Wi-Fi configuration file not found on device. Exiting."
         return 1
-    }
+    fi
 
   
     execute_with_retry "adb -s $device_serial shell 'su -c \"chmod 644 $wifi_file\"'" "Setting permissions" || true
@@ -570,12 +570,12 @@ recover_wifi_passwords() {
     if ! execute_with_retry "adb -s $device_serial pull $wifi_file $local_wifi_file" "WiFi config transfer"; then
         log "ERROR" "Failed to pull Wi-Fi configuration file. Check device permissions."
         return 1
-    }
+    fi
 
     if [[ ! -f "$local_wifi_file" ]]; then
         log "ERROR" "Failed to pull Wi-Fi configuration file. Check device permissions."
         return 1
-    }
+    fi
 
     log "INFO" "Wi-Fi configuration file pulled successfully. Analyzing..."
     grep -oP '(?<=<string name="PreSharedKey">).+?(?=</string>)' "$local_wifi_file" | while read -r line; do
@@ -1056,12 +1056,12 @@ recover_sms() {
     if ! execute_with_retry "adb -s $device_serial pull /data/data/com.android.providers.telephony/databases/mmssms.db $sms_db" "SMS database transfer"; then
         log "ERROR" "Failed to pull SMS database. Root access required."
         return 1
-    }
+    fi
     
     if [ ! -f "$sms_db" ]; then
         log "ERROR" "Failed to pull SMS database. Root access required."
         return 1
-    }
+    fi
     
     log "INFO" "Extracting recent SMS messages..."
     sqlite3 "$sms_db" "SELECT address, date, body FROM sms ORDER BY date DESC LIMIT 10;" | awk -F'|' '{print "From: "$1" | Date: "$2" | Msg: "$3}'
@@ -1094,12 +1094,12 @@ recover_call_logs() {
     if ! execute_with_retry "adb -s $device_serial pull /data/data/com.android.providers.contacts/databases/contacts2.db $call_db" "Call logs transfer"; then
         log "ERROR" "Failed to pull call log database. Root access required."
         return 1
-    }
+    fi
     
     if [ ! -f "$call_db" ]; then
         log "ERROR" "Failed to pull call log database. Root access required."
         return 1
-    }
+    fi
     
     log "INFO" "Extracting recent call logs..."
     sqlite3 "$call_db" "SELECT number, date, duration, type FROM calls ORDER BY date DESC LIMIT 10;" | awk -F'|' '{print "Number: "$1" | Date: "$2" | Duration: "$3" | Type: "$4}'
